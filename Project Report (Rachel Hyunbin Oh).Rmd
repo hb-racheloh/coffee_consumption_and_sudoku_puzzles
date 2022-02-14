@@ -1,0 +1,99 @@
+---
+title: "Does Coffee Consumption Improve Ability To Do Sudoku Puzzles?"
+author: "Rachel Hyunbin Oh"
+date: "19/08/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Description 
+In this experiment, the question I aimed to answer was _Does coffee consumption improve ability to do sudoku puzzles?_. It is known that caffeine acts as a mild stimulant to the central nervous system and therfore enhances mental acuity. However, I wanted to know whether it really helps improve mental performance to the level that people can actually sense it. 
+
+I chose this topic because I hoped to learn if taking coffee was beneficial for my concentration in the short run and if so, it would be good for future use. For example, it would be helpful on an exam day at UofT.
+
+Drinking the same amount of same coffee was a method of coffee consumption and the time taken to finish a three-by-three sudoku puzzle was recorded as a measurement of the results. The experiment took 8 days, and each day was a different run because I thought coffee would affect my brain for a day. I drank coffee at the same time for 8 days, and different quizzes were taken everyday but the level of difficulty was the same to reduce the bias. I also added sleeping hours as another factor because I believed it would affect the results too. 
+
+The experiment was replicated twice so there were 8 runs in total, and the run order was randomized using R. I have set seed with my student number and the randomized order was as follows:
+
+```{r}
+set.seed(1002965776)
+runs <- c(1,2,3,4,5,6,7,8)
+shuffle <- sample(runs, 8)
+shuffle
+```
+
+
+## Analysis of Data
+This experiment employs a replicated \(2^2\) factorial design with two quantitative factors - Coffee Consumption (C) and Sleep Duration (S). Coffee Consumption _C_ has two levels: Yes and No. These are coded as 1 and -1 respectively. Seep Duration _S_ has two levels: 10 hours and 5 hours. These are coded as 1 and -1 respectively. The result _y_ is the time taken to finish a three-by-three sudoku puzzle and it is measured in minutes.
+
+The recorded data is shown below.
+```{r}
+run <- c(shuffle)
+C <- c(-1,-1,1,1,-1,-1,1,1)
+S <- c(-1,1,-1,1,-1,1,-1,1)
+y <- c(20,15,15,13,19,16,14,10)
+dat <- data.frame(run,C,S,y)
+```
+
+
+```{r}
+run1 <- c(2,1,6,5)
+run2 <- c(4,3,7,8)
+Coffee <- c(-1,-1,1,1)
+Sleep <- c(-1,1,-1,1)
+y1 <- c(19,15,15,13)
+y2 <- c(20,16,14,10)
+diff <- c(-1, -1, 1, 3)
+dat2 <- data.frame(run1,run2,Coffee,Sleep,y1,y2,diff)
+print(dat2, row.names = FALSE)
+```
+For example, \(y=20\) was obtained from the run 4 when \(C=-1\) and \(S=-1\), and runs 4 and 2 are two replicates under the same settings for _C_ and _S_.
+
+Suppose that the variance of each measurement is \(\sigma^2\). The estimated variance at each set of conditions is: \(s_{i}^2=\frac{diff_i^2}{2}\), where \(diff_i=(y_{i1}-y_{i2})\) and \(y_{i1}\) is the first outcome from \(ith\) run. A pooled estimate of \(\sigma^2\) is \(s^2=\frac{\Sigma_{i=1}^4s_i^2}{4}=\frac{6}{4}=1.5\)
+
+Each estimated effect is a difference between two averages of 4 observations. The variance of a factorial effect for duplicated runs is \(Var\)(effect)\(=(\frac{1}{4}+\frac{1}{4})s^2=\frac{3}{4}=0.75\). So, the standard error of any factorial effect is: \(se\)(effect)\(=\sqrt{0.75}\approx0.866\)
+
+A linear model for a \(2^2\) factorial design is:
+\(y_i=\beta_0+\beta_1x_{i1}+\beta_2x_{i2}+\beta_3x_{i1}x_{i2}\).
+The variables \(x_{i1}x_{i2}\) is the interaction between coffee consumption and sleep duration. The parameter estimates are obtained via the lm() function in R. 
+```{r}
+fact.mod <- lm(y~C*S,data=dat)
+round(summary(fact.mod)$coefficients,2)
+```
+The estimated least squares coefficients are one-half the factorial estimates, and the intercept \(\beta_0\) is the sample mean. Therefore, the factorial estimates are twice the least squares coefficients. For example,
+
+\(\hat{\beta}_1=-2.25\Rightarrow C=2\times(-2.25)=-4.5\\ \hat{\beta}_2=-1.75\Rightarrow S = 2 \times (-1.75)=-3.5\\
+\hat{\beta}_3=0.25\Rightarrow CS = 2 \times 0.25 = 0.5\)
+
+The p-value for \(\beta_1\) corresponds to the factorial effect for coffee consumption, \(H_0:\beta_1=0\) vs. \(H_1:\beta_1\neq0\). If the null hypothesis is true then \(\beta_1=0\Rightarrow C=0\). However, we found that \(C=-4.5\) and the p-value for coffee consumption is small (Pr(>|t|)=0.01), which means that there is evidence that the mean _y_ is different when taking coffee compared to not taking coffee and it is statistically significant at 5% significance level.
+
+The 95% confidence intervals for the factorial effects are shown below.
+
+```{r}
+2*confint.lm(fact.mod)
+```
+The confidence intervals for main effects don't include 0 but it includes 0 for the interaction effect. 
+
+```{r}
+interaction.plot(dat$C,dat$S,dat$y, type = "l", xlab="Coffee Consumption", trace.label="Sleep Duration",ylab="mean y")
+```
+
+Looking at the interaction plot, it took less time on average when I took coffee than when I did not take coffee. Also, it took less time on average when I slept more. 
+
+We see that the two lines are almost parallel, which indicates that there is no interaction effect. Therefore, we conclude that there is no interaction effect between coffee consumption and sleep duration.
+
+```{r include=FALSE}
+library(FrF2)
+```
+
+```{r}
+DanielPlot(fact.mod, half=TRUE, autolab=F, main = "Half Normal Plot of effects from coffee experiment")
+```
+
+I should have added more factors for visual judgement for the above half-normal plot but considering the fact that each run took place on a different day, I did not have enough time to do a replicated experiment for more than 2 factors. This could be a limitation of this study. However, assuming C and S formed a straight line, wee see that C:S does not fall along the straight line, which once again conveys that there is no interaction effect between the two factors. 
+
+## Conclusions
+In conclusion, coffee consumption does affect ability to do sudoku puzzles; in fact it reduces the time to complete the puzzles. I also found that sleeping hours affected the results too, in a way that the more I slept, the less time I took to complete the quizzes. However, its effect was not as big as coffee consumption's, since the 95% confidence intervals for sleep duration is (-5.9,-1.1), whereas it is (-6.9,-2.1) for coffee consumption. Nevertheless, the difference is not huge but it is clear that coffee consumption affected the results more. Furthermore, there was no interaction effect between coffee consumption and sleep duration.
